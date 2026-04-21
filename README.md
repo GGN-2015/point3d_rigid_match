@@ -1,6 +1,9 @@
 # point3d_rigid_match
 Compute the correspondence between points in the two point sets before and after rigid transformation.
 
+> [!IMPORTANT]
+> The algorithm in this project is only applicable to scenarios with nearly no noise, and it requires that the two point sets can be aligned via a single rotation plus a single translation. This algorithm is used to establish point correspondences when such correspondences are uncertain. It is only suitable for cases with a very small number of points (e.g., matching real-time coordinates of infrared optical tracking marker spheres with coordinates defined in the instrument description file).
+
 ## Installation
 
 ```bash
