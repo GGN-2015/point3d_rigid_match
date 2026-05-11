@@ -1,6 +1,6 @@
 [project]
 name = "point3d-rigid-match"
-version = "0.1.0"
+version = "0.1.1"
 description = "Compute the correspondence between points in the two point sets before and after rigid transformation."
 authors = [
     {name = "GGN_2015",email = "neko@jlulug.org"}

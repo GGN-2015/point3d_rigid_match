@@ -33,7 +33,7 @@ B = [
 
 # Output the correspondence between A and B
 N = len(A)
-corr = find_correspondence(A, B)
+corr = find_correspondence(A, B, rank_idx=0)
 for i, j in enumerate(corr):
     print(f"A[{i}] -> B[{j}]")
 ```

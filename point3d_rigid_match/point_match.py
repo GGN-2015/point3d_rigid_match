@@ -1,5 +1,27 @@
 import numpy as np
-from scipy.optimize import linear_sum_assignment
+from itertools import permutations
+
+# ------------------- 新增：暴力k优解替换linear_sum_assignment -------------------
+def k_best_linear_sum_assignment(cost_matrix, rank_idx=0):
+    """
+    暴力枚举所有完美匹配，返回第 rank_idx 优解（0=最优）
+    """
+    n = cost_matrix.shape[0]
+    # 生成所有可能的列分配（完美匹配）
+    all_cols = list(permutations(range(n)))
+    # 计算每个匹配的总代价
+    solutions = []
+    for cols in all_cols:
+        cost = cost_matrix[np.arange(n), cols].sum()
+        solutions.append((cost, cols))
+    # 按代价升序排序
+    solutions.sort(key=lambda x: x[0])
+    # 取第 rank_idx 优解
+    best_cost, best_cols = solutions[rank_idx]
+    row_ind = np.arange(n)
+    col_ind = np.array(best_cols)
+    return row_ind, col_ind
+# --------------------------------------------------------------------------------------
 
 def distance_signature(points, idx):
     """
@@ -21,7 +43,8 @@ def build_cost_matrix(A, B):
             cost[i, j] = np.sqrt(np.sum((sigA - sigB) ** 2))
     return cost
 
-def find_correspondence(raw_A:list[list[float]], raw_B:list[list[float]]):
+# 改：增加 rank_idx 参数，默认0=最优
+def find_correspondence(raw_A:list[list[float]], raw_B:list[list[float]], rank_idx=0):
     A = np.array(raw_A)
     B = np.array(raw_B)
     N = len(raw_A)
@@ -30,7 +53,8 @@ def find_correspondence(raw_A:list[list[float]], raw_B:list[list[float]]):
     if len(B.shape) != 2 or B.shape[1] != 3:
         raise ValueError("B should be N * 3 matrix.")
     cost = build_cost_matrix(A, B)
-    row_ind, col_ind = linear_sum_assignment(cost)
+    # 替换为支持k优解的版本
+    row_ind, col_ind = k_best_linear_sum_assignment(cost, rank_idx=rank_idx)
     corr = np.zeros(N, dtype=int)
     for i, j in zip(row_ind, col_ind):
         corr[i] = j
@@ -51,7 +75,24 @@ if __name__ == "__main__":
         [-1.2711589253295885, 0.2826915078445261, 0.0008482241211740123]
     ]
 
-    N = len(A)
-    corr = find_correspondence(A, B)
-    for i, j in enumerate(corr):
-        print(f"A[{i}] -> B[{j}]")
+    # 先构建代价矩阵（用于计算误差）
+    A_np = np.array(A)
+    B_np = np.array(B)
+    cost_matrix = build_cost_matrix(A_np, B_np)
+    
+    # 测试：最优解(rank_idx=0)、次优解(rank_idx=1) + 误差衡量
+    for rank in range(5):
+        print(f"\n===== 第 {rank} 优匹配结果 =====")
+        corr = find_correspondence(A, B, rank_idx=rank)
+        
+        # 计算当前匹配的总误差 & 平均误差
+        total_error = 0.0
+        for i, j in enumerate(corr):
+            err = cost_matrix[i, j]
+            total_error += err
+            print(f"A[{i}] -> B[{j}] | 单点匹配误差: {err:.6f}")
+        
+        avg_error = total_error / len(corr)
+        print(f"\n第 {rank} 优解 误差统计：")
+        print(f"总匹配代价误差 = {total_error:.6f}")
+        print(f"平均单点匹配误差 = {avg_error:.6f}")
